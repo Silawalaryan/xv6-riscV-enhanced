@@ -130,6 +130,7 @@ UPROGS=\
 	$U/_cp\
 	$U/_echo\
 	$U/_forktest\
+	$U/_getppid\
 	$U/_grep\
 	$U/_init\
 	$U/_kill\
@@ -137,6 +138,7 @@ UPROGS=\
 	$U/_ls\
 	$U/_mkdir\
 	$U/_mv\
+	$U/_ps\
 	$U/_rm\
 	$U/_sh\
 	$U/_stressfs\

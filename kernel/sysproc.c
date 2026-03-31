@@ -7,6 +7,8 @@
 #include "proc.h"
 #include "vm.h"
 
+extern struct proc proc[];
+
 uint64
 sys_exit(void)
 {
@@ -106,4 +108,43 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+// Return parent process ID of current process
+uint64
+sys_getppid(void)
+{
+  struct proc *p = myproc();
+  if(p->parent == 0)
+    return 0;
+  return p->parent->pid;
+}
+
+// Print all active processes - ps command
+uint64
+sys_ps(void)
+{
+  struct proc *p;
+  char *states[] = {
+    [UNUSED]   "unused   ",
+    [USED]     "used     ",
+    [SLEEPING] "sleeping ",
+    [RUNNABLE] "runnable ",
+    [RUNNING]  "running  ",
+    [ZOMBIE]   "zombie   "
+  };
+
+  printf("PID\tPPID\tSTATE\t\tNAME\n");
+  printf("-------------------------------------\n");
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    int ppid = p->parent ? p->parent->pid : 0;
+    printf("%d\t%d\t%s\t%s\n",
+      p->pid,
+      ppid,
+      states[p->state],
+      p->name);
+  }
+  return 0;
 }
