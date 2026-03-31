@@ -51,6 +51,10 @@ struct {
   uint r;  // Read index
   uint w;  // Write index
   uint e;  // Edit index
+
+  // Track a small subset of ANSI escape sequences (ESC [ A/B) so
+  // the kernel doesn't echo them back and confuse the host terminal.
+  int esc; // 0=none, 1=got ESC, 2=got ESC[
 } cons;
 
 //
@@ -121,11 +125,12 @@ consoleread(int user_dst, uint64 dst, int n)
     dst++;
     --n;
 
-    if(c == '\n'){
-      // a whole line has arrived, return to
-      // the user-level read().
+    // In the original xv6 console, reads are line-buffered.
+    // Here we return as soon as either:
+    //  - we saw a newline, or
+    //  - the input queue is empty (so programs can do char-at-a-time IO).
+    if(c == '\n' || cons.r == cons.w)
       break;
-    }
   }
   release(&cons.lock);
 
@@ -143,43 +148,59 @@ consoleintr(int c)
 {
   acquire(&cons.lock);
 
-  switch(c){
-  case C('P'):  // Print process list.
+  if(c == C('P')){
+    // Print process list.
     procdump();
-    break;
-  case C('U'):  // Kill line.
-    while(cons.e != cons.w &&
-          cons.buf[(cons.e-1) % INPUT_BUF_SIZE] != '\n'){
-      cons.e--;
-      consputc(BACKSPACE);
-    }
-    break;
-  case C('H'): // Backspace
-  case '\x7f': // Delete key
-    if(cons.e != cons.w){
-      cons.e--;
-      consputc(BACKSPACE);
-    }
-    break;
-  default:
-    if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
-      c = (c == '\r') ? '\n' : c;
-
-      // echo back to the user.
-      consputc(c);
-
-      // store for consumption by consoleread().
-      cons.buf[cons.e++ % INPUT_BUF_SIZE] = c;
-
-      if(c == '\n' || c == C('D') || cons.e-cons.r == INPUT_BUF_SIZE){
-        // wake up consoleread() if a whole line (or end-of-file)
-        // has arrived.
-        cons.w = cons.e;
-        wakeup(&cons.r);
-      }
-    }
-    break;
+    release(&cons.lock);
+    return;
   }
+
+  if(c == 0)
+    goto done;
+
+  if(c == '\r')
+    c = '\n';
+
+  // Maintain a tiny escape-sequence state to avoid echoing
+  // arrow key sequences (ESC [ A/B). We must suppress echo for
+  // *all* bytes in the sequence, including the final 'A'/'B'.
+  int suppress_echo = 0;
+  if(cons.esc == 0){
+    if(c == 0x1b){
+      suppress_echo = 1;
+      cons.esc = 1;
+    }
+  } else if(cons.esc == 1){
+    suppress_echo = 1;
+    if(c == '[')
+      cons.esc = 2;
+    else
+      cons.esc = 0;
+  } else if(cons.esc == 2){
+    suppress_echo = 1;
+    cons.esc = 0;
+  }
+
+  // Store byte for consumption by consoleread().
+  // Make it immediately readable (character-at-a-time input).
+  if(cons.e-cons.r < INPUT_BUF_SIZE){
+    cons.buf[cons.e++ % INPUT_BUF_SIZE] = c;
+    cons.w = cons.e;
+    wakeup(&cons.r);
+  }
+
+  // Echo back to the user unless this byte is part of an escape sequence.
+  // (ESC sequences are consumed by user programs like the shell.)
+  if(suppress_echo == 0){
+    if(c == '\t')
+      goto done;
+    if(c == 127 || c == C('H'))
+      consputc(BACKSPACE);
+    else
+      consputc(c);
+  }
+
+done:
   
   release(&cons.lock);
 }
