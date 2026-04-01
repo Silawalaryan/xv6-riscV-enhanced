@@ -10,15 +10,15 @@ system calls.
 
 ## Enhancements Over Base xv6
 
-| Feature | Description |
-|---|---|
-| **Enhanced Shell** | Command history, up/down arrow navigation, tab completion |
-| **`cp` command** | Copy files with proper directory-aware destination handling |
-| **`mv` command** | Move/rename files using fast link+unlink strategy |
-| **`forphan`** | Demonstrates controlled orphan process reclamation |
-| **`dorphan`** | Demonstrates detached daemon-style orphan process |
-| **`getppid` syscall** | New kernel syscall returning parent process ID |
-| **`ps` syscall** | New kernel syscall listing all active processes |
+| Feature               | Description                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| **Enhanced Shell**    | Command history, up/down arrow navigation, tab completion   |
+| **`cp` command**      | Copy files with proper directory-aware destination handling |
+| **`mv` command**      | Move/rename files using fast link+unlink strategy           |
+| **`forphan`**         | Demonstrates controlled orphan process reclamation          |
+| **`dorphan`**         | Demonstrates detached daemon-style orphan process           |
+| **`getppid` syscall** | New kernel syscall returning parent process ID              |
+| **`ps` syscall**      | New kernel syscall listing all active processes             |
 
 ---
 
@@ -27,6 +27,7 @@ system calls.
 ### Prerequisites
 
 You will need:
+
 - A RISC-V GCC cross-compiler toolchain
 - QEMU compiled for riscv64 (minimum version 7.2)
 
@@ -35,6 +36,7 @@ You will need:
 ### Windows (WSL2) — Recommended for Windows Users
 
 **Step 1: Install WSL2 with Ubuntu**
+
 ```powershell
 # Run in PowerShell as Administrator
 wsl --install
@@ -42,6 +44,7 @@ wsl --install
 ```
 
 **Step 2: Open Ubuntu terminal and install dependencies**
+
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get install -y git build-essential qemu-system-misc \
@@ -49,9 +52,18 @@ sudo apt-get install -y git build-essential qemu-system-misc \
 ```
 
 **Step 3: Clone and run**
+
 ```bash
 git clone https://github.com/Silawalaryan/xv6-riscV-enhanced.git
 cd xv6-riscv-enhanced
+make qemu
+```
+
+**Troubleshooting: Permission Denied Error**
+If you get a `Permission denied` error when running `make qemu`, run:
+
+```bash
+chmod +x mkfs/mkfs
 make qemu
 ```
 
@@ -60,6 +72,7 @@ make qemu
 ### Linux (Ubuntu/Debian)
 
 **Step 1: Install dependencies**
+
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get install -y git build-essential qemu-system-misc \
@@ -67,11 +80,19 @@ sudo apt-get install -y git build-essential qemu-system-misc \
 ```
 
 **Step 2: Clone and run**
+
 ```bash
 git clone https://github.com/Silawalaryan/xv6-riscV-enhanced.git
 cd xv6-riscv-enhanced
 make qemu
 ```
+
+**Troubleshooting: Permission Denied Error**
+If you get a `Permission denied` error when running `make qemu`, run:
+
+````bash
+chmod +x mkfs/mkfs
+make qemu
 
 ---
 
@@ -80,9 +101,10 @@ make qemu
 **Step 1: Install Homebrew if not already installed**
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+````
 
 **Step 2: Install dependencies**
+
 ```bash
 brew tap riscv-software-src/riscv
 brew install riscv-tools
@@ -90,6 +112,7 @@ brew install qemu
 ```
 
 **Step 3: Clone and run**
+
 ```bash
 git clone https://github.com/Silawalaryan/xv6-riscV-enhanced.git
 cd xv6-riscv-enhanced
@@ -101,6 +124,7 @@ make qemu
 ## Running the OS
 
 Once xv6 boots you will see:
+
 ```
 xv6 kernel is booting
 hart 1 starting
@@ -110,6 +134,7 @@ $
 ```
 
 The `$` is the xv6 shell. Try the following commands:
+
 ```sh
 # List all available programs
 ls
@@ -140,23 +165,25 @@ history
 
 ## Project Structure
 ```
+
 xv6-riscv-enhanced/
 ├── kernel/
-│   ├── console.c     ← Modified: arrow key and char-at-a-time support
-│   ├── syscall.c     ← Modified: registered getppid and ps syscalls
-│   ├── syscall.h     ← Modified: added SYS_getppid and SYS_ps
-│   └── sysproc.c     ← Modified: implemented sys_getppid and sys_ps
+│ ├── console.c ← Modified: arrow key and char-at-a-time support
+│ ├── syscall.c ← Modified: registered getppid and ps syscalls
+│ ├── syscall.h ← Modified: added SYS_getppid and SYS_ps
+│ └── sysproc.c ← Modified: implemented sys_getppid and sys_ps
 ├── user/
-│   ├── sh.c          ← Modified: history, arrow keys, tab completion
-│   ├── cp.c          ← New: file copy command
-│   ├── mv.c          ← New: file move/rename command
-│   ├── ps.c          ← New: process list user program
-│   ├── getppid.c     ← New: getppid test user program
-│   ├── forphan.c     ← New: orphan process reclamation demo
-│   └── dorphan.c     ← New: detached orphan process demo
+│ ├── sh.c ← Modified: history, arrow keys, tab completion
+│ ├── cp.c ← New: file copy command
+│ ├── mv.c ← New: file move/rename command
+│ ├── ps.c ← New: process list user program
+│ ├── getppid.c ← New: getppid test user program
+│ ├── forphan.c ← New: orphan process reclamation demo
+│ └── dorphan.c ← New: detached orphan process demo
 ├── mkfs/
-│   └── mkfs.c        ← Filesystem image builder
-└── Makefile          ← Modified: added new user programs
+│ └── mkfs.c ← Filesystem image builder
+└── Makefile ← Modified: added new user programs
+
 ```
 
 ---
@@ -177,3 +204,4 @@ see the original README at https://github.com/mit-pdos/xv6-riscv.
 
 Please send errors and suggestions regarding the base xv6 to Frans
 Kaashoek and Robert Morris (kaashoek,rtm@mit.edu).
+```
